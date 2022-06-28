@@ -167,6 +167,12 @@ body {
   width: 100%;
   background: transparent;
 }
+.refresh{
+  color: white;
+}
+.active{
+  display: none;
+}
 .add-items .btn,
 .add-items .fc button,
 .fc .add-items button,
