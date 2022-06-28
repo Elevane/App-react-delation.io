@@ -2,9 +2,11 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
 import { savePDF } from '@progress/kendo-react-pdf';
+import moment from 'moment-timezone';
+import 'moment/locale/fr';
 
 function App() {
-  
+  moment.locale('fr');
   const [delationList, setDelationList] = useState([]);
   const [name, setName] = useState("");
   const [action, setAction] = useState("");
@@ -12,7 +14,7 @@ function App() {
   const [activeButton, setActiveButton] = useState("disabled");
   const [acttiveExport, setActiveExport] = useState("disabled");
   useEffect(() => {
-    if(action != null && name != null && action != undefined && name != undefined && action != "" && name  != "")
+    if(action !== null && name !== null && action !== undefined && name !== undefined && action !== "" && name  !== "")
     {
       setActiveButton(" ")
     }
@@ -31,7 +33,7 @@ useEffect(() => {
             setDelationList(delations.delations)
           }
           
-        if(Object.keys(delations.delations).length == 0){
+        if(Object.keys(delations.delations).length === 0){
           setActiveExport("disabled")
           
         }
@@ -48,19 +50,22 @@ useEffect(() => {
     
     if(delationList.length > 0 && acttiveExport === " "){
       savePDF(pdfData, {
+        creator: localStorage.getItem("delation_user"),
         paperSize: "auto",
         margin: 40,
-        fileName: `Report for ${new Date().getDate()}`,
+        fileName: `Report for ${moment.tz(new Date(), "Europe/berlin")}`,
       });
     }
     
   };
 
   let itemList= delationList.map((item,index)=>{
-    return <li key={index} id={item.id}>
+      
+    return <li key={index} id={item.id} className="k-pdf-export">
               <p className='nom'>{item.name}</p><p>.</p>
               <p className='action'>{item.actionname}</p><p>.</p>
-              <p className='date'>{new Date(item.date_delation).getUTCDate() +"/"+ new Date(item.date_delation).getUTCMonth()+"/"+new Date(item.date_delation).getUTCFullYear()}</p><p>.</p>
+              <p className='date'>{moment.tz(item.date_delation, "Europe/Paris").locale("fr").format("LLL")}</p><p>.</p>
+              <p>{localStorage.getItem("delation_user") === item.author ? <i className=" bi bi-person creator"></i> : ""}</p>
   </li>
   })
 
@@ -101,7 +106,8 @@ useEffect(() => {
         "id" : getIdHash(),
         "name" : name,
         "actionname" : action,
-        "date_delation" : new Date()
+        "date_delation" : moment.tz(new Date(), "Europe/Paris"),
+        "author" : localStorage.getItem("delation_user")
       };
       setActiveButton("disabled")
       sendDelation(toCreate)
@@ -122,7 +128,7 @@ useEffect(() => {
           console.log(delations.delations)
         }
         
-      if(Object.keys(delations.delations).length == 0){
+      if(Object.keys(delations.delations).length === 0){
         setActiveExport("disabled")
         
       }
