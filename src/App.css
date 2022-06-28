@@ -199,6 +199,12 @@ body {
   margin-left: auto;
   margin-right: 0.5rem;
 }
+.creator{
+  color: green;
+}
+.k-pdf-export .noExport {
+  display: none;
+}
 li {
   display: flex;
   flex-direction: row;
