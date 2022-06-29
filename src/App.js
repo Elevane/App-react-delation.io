@@ -176,7 +176,7 @@ const hrandleCallback = (response)  => {
   };
   
 
-    console.log(user)
+  
 
     return(
       <section className='section'>
