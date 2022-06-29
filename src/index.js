@@ -1,11 +1,12 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
-import FakeAuth from './FakeAuth';
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
+import ReactDOM from 'react-dom';
+import "bootstrap/dist/css/bootstrap.min.css";
+
+ReactDOM.render(
   <React.StrictMode>
-    <FakeAuth><App /></FakeAuth>
-  </React.StrictMode>
+    <App />
+  </React.StrictMode>,
+  document.getElementById('root')
 );
