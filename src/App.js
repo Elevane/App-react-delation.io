@@ -5,12 +5,23 @@ import { savePDF } from '@progress/kendo-react-pdf';
 import moment from 'moment-timezone';
 import 'moment/locale/fr';
 import jwt_decode from "jwt-decode";
-import { Avatar } from '@mui/material';
+import { Avatar, List, ListItem, ListItemAvatar, ImageIcon, ListItemText,Divider, Typography } from '@mui/material';
+
+
+
+ const rank = (number) => {
+    switch(number){
+      case number < 20:
+        return {"value":"lache", "color" : "red"};
+    } 
+ }
+
 
 
 
 function App() {
   moment.locale('fr');
+
 
   const [delationList, setDelationList] = useState([]);
   const [name, setName] = useState("");
@@ -19,28 +30,33 @@ function App() {
   const [activeButton, setActiveButton] = useState("disabled");
   const [acttiveExport, setActiveExport] = useState("disabled");
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("delation_user")))
-
+  const [userList, setUserList] = useState(null)
 
   useEffect(()=> {
-
     fetch(process.env.REACT_APP_API_URL)
     .then((response) => response.json())
     .then(
       (delations) => {
         if(Object.keys(delations.delations).length > 0){
           setDelationList(delations.delations)
-        }
-        
-      if(Object.keys(delations.delations).length === 0){
-        setActiveExport("disabled")
-        
-      }
+          setActiveExport(" ")
+        } 
       else{
-        setActiveExport(" ")
+        setActiveExport("disabled")
       }
     }
-    )    
-
+    )   
+    fetch(process.env.REACT_APP_API_URL+ "/account")
+      .then((response) => response.json())
+      .then(
+        (users) => {
+          console.log(users)
+          if(Object.keys(users.users).length > 0){
+            setUserList(users.users)
+          } 
+      }
+      )   
+    
 
     window.google.accounts.id.initialize({
         client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
@@ -57,9 +73,25 @@ function App() {
     }
   }, [name, action])
 
-useEffect(async () => {
-}, [user])
+useEffect(() => {
+  
+  fetch(process.env.REACT_APP_API_URL+"/account", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      Accept: "*/*",
+    },
+    body: JSON.stringify({
+      "email": user?.email,
+      "name" : user?.name,
+      "picture" : user?.picture,
+      "aud" : user?.aud
+    }),
+  })
 
+}, [user])
+useEffect(() => {refreshUser();}, [delationList])
 
 useEffect(() => {
   setPdfData(document.getElementById("delationbs"))
@@ -91,14 +123,40 @@ const hrandleCallback = (response)  => {
     
   };
 
-  let itemList= delationList.map((item,index)=>{
-      
+  let itemList = delationList.map((item,index)=>{
+    const isUser = user && user !== null && user?.email === item.author;
     return <li key={index} id={item.id} className="k-pdf-export">
               <p className='nom'>{item.name}</p><p>.</p>
               <p className='action'>{item.actionname}</p><p>.</p>
               <p className='date'>{moment.tz(item.date_delation, "Europe/Paris").locale("fr").format("LLL")}</p><p>.</p>
-              <p>{localStorage.getItem("delation_user") === item.author ? <i className=" bi bi-person creator"></i> : ""}</p>
-  </li>
+              <p>{ isUser ? <i className=" bi bi-person creator"></i> : ""}</p>
+    </li>
+  })
+
+  let mappedUserList = userList?.map((item,index)=>{
+      
+    return <ListItem key={index} alignItems="flex-start">
+      <ListItemAvatar>
+        <Avatar alt={item.name} src={item.picture} />
+      </ListItemAvatar>
+      <ListItemText
+        primary={item.name}
+        secondary={
+          <React.Fragment>
+            <Typography
+              sx={{ display: 'inline', color:"red" }}
+              component="span"
+              variant="body2"
+              color="text.primary"
+            >
+              {"Lache"}
+            </Typography>
+            {" — "+ item.points}
+          </React.Fragment>
+          }
+        />
+        <Divider variant="inset" component="p" />
+      </ListItem>
   })
 
 
@@ -139,15 +197,17 @@ const hrandleCallback = (response)  => {
         "name" : name,
         "actionname" : action,
         "date_delation" : moment.tz(new Date(), "Europe/Paris"),
-        "author" : user.name
+        "author" : user?.email
       };
       setActiveButton("disabled")
       sendDelation(toCreate)
       const newList = [...delationList, toCreate];
       setDelationList(newList);
+      
       clearFields();
     }  
   };
+
   const refresh = () => {
     setActiveButton("disabled")
     setActiveExport("disabled")
@@ -157,18 +217,27 @@ const hrandleCallback = (response)  => {
       (delations) => {
         if(Object.keys(delations.delations).length > 0){
           setDelationList(delations.delations)
+          setActiveExport(" ")
         }
+        else
+          setActiveExport("disabled")
         
-      if(Object.keys(delations.delations).length === 0){
-        setActiveExport("disabled")
-        
-      }
-      else{
-        setActiveExport(" ")
-      }
+      
+      
+    }
+    )   
+    refreshUser();  
+  }
+  const refreshUser = () => {
+    fetch(process.env.REACT_APP_API_URL + "/account")
+    .then((response) => response.json())
+    .then(
+      (users) => {
+        if(Object.keys(users.users).length > 0){
+          setUserList(users.users)
+        }
     }
     )    
-    
   }
   const clearFields = () => {
     setAction("");
@@ -182,7 +251,10 @@ const hrandleCallback = (response)  => {
       <section className='section'>
       {user !== null ? <h1 style={{display:"flex", alignItems: "center", justifyContent: "spaceBetween"}}>Délation.io <Avatar alt="Remy Sharp" src={user?.picture} /></h1> : <h1>Délation.io</h1>}
       <h4>Déclares toutes les actions de tes collègues et gagne un capital sympathie auprès de ton chef.</h4>
-      <div className="page-content page-container" id="page-content">
+      <div className="page-content page-container d-flex " id="page-content">
+      {userList === null || user === null ? "" : <List sx={{ width: '25%', maxWidth: 360, bgcolor: 'background.paper', marginTop: "5%" }}>{mappedUserList}</List>
+                    
+                      }
         <div className="padding">
             <div className="row container d-flex justify-content-center">
                 <div className="col-md-12">
