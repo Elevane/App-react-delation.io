@@ -17,8 +17,6 @@ import { Avatar, List, ListItem, ListItemAvatar, ImageIcon, ListItemText,Divider
  }
 
 
-
-
 function App() {
   moment.locale('fr');
 
